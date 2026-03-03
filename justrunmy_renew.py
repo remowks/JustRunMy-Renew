@@ -7,15 +7,18 @@ import time
 import subprocess
 from seleniumbase import SB
 
-# ============================================================
-#  环境变量配置
-# ============================================================
-LOGIN_URL = os.environ.get("JUSTRUNMY_LOGIN_URL", "https://justrunmy.app/id/Account/Login")
-PANEL_URL = os.environ.get("JUSTRUNMY_PANEL_URL", "https://justrunmy.app/panel")
+LOGIN_URL = "https://justrunmy.app/id/Account/Login"
+DOMAIN    = "justrunmy.app"
+
+# 从环境变量获取账号密码
 EMAIL     = os.environ.get("JUSTRUNMY_EMAIL")
 PASSWORD  = os.environ.get("JUSTRUNMY_PASSWORD")
-APP_NAME  = os.environ.get("JUSTRUNMY_APP_NAME",  "JustRunMy DE")
-PROXY_STR = os.environ.get("JUSTRUNMY_PROXY",     "http://127.0.0.1:8080")
+
+# 如果未获取到账号密码，终止脚本
+if not EMAIL or not PASSWORD:
+    print("❌ 致命错误：未找到 JUSTRUNMY_EMAIL 或 JUSTRUNMY_PASSWORD 环境变量！")
+    print("💡 请检查 GitHub Repository Secrets 是否配置正确。")
+    sys.exit(1)
 
 # ============================================================
 #  页面注入脚本
@@ -261,19 +264,18 @@ def renew(sb) -> bool:
     print("   🚀 开始自动续期流程")
     print("="*50)
     
-    print(f"🌐 进入控制面板: {PANEL_URL}")
-    sb.open(PANEL_URL)
+    print("🌐 进入控制面板: https://justrunmy.app/panel")
+    sb.open("https://justrunmy.app/panel")
     time.sleep(3)
 
-    print(f"🖱️ 查找应用: {APP_NAME}")
+    print("🖱️ 查找应用: JustRunMy DE")
     try:
-        # 使用动态传入的应用名称来定位卡片
-        sb.wait_for_element(f'h3[title="{APP_NAME}"]', timeout=10)
-        sb.click(f'h3[title="{APP_NAME}"]')
+        sb.wait_for_element('h3[title="JustRunMy DE"]', timeout=10)
+        sb.click('h3[title="JustRunMy DE"]')
         time.sleep(3)
         print(f"📍 成功进入应用详情页: {sb.get_current_url()}")
     except Exception as e:
-        print(f"❌ 找不到应用卡片 ({APP_NAME}): {e}")
+        print(f"❌ 找不到应用卡片 (JustRunMy DE): {e}")
         sb.save_screenshot("renew_app_not_found.png")
         return False
 
@@ -332,25 +334,17 @@ def main():
     print("=" * 50)
     print("   JustRunMy.app 自动登录与续期脚本")
     print("=" * 50)
-
-    # 运行前进行基础的参数校验
-    if not EMAIL or not PASSWORD:
-        print("❌ 错误：未配置 JUSTRUNMY_EMAIL 或 JUSTRUNMY_PASSWORD 环境变量！")
-        sys.exit(1)
     
-    print(f"🔗 挂载代理: {PROXY_STR if PROXY_STR else '无'}")
+    proxy_str = "http://127.0.0.1:8080"
+    print(f"🔗 挂载 Gost 代理: {proxy_str}")
     
-    # proxy 参数支持传 None（如果用户把代理变量设为空的话）
-    proxy_arg = PROXY_STR if PROXY_STR else None
-
-    with SB(uc=True, test=True, headless=False, proxy=proxy_arg) as sb:
+    with SB(uc=True, test=True, headless=False, proxy=proxy_str) as sb:
         print("✅ 浏览器已启动")
-        if proxy_arg:
-            try:
-                sb.open("https://api.ipify.org/?format=json")
-                print(f"🌐 代理出口真实 IP: {sb.get_text('body')}")
-            except Exception:
-                pass
+        try:
+            sb.open("https://api.ipify.org/?format=json")
+            print(f"🌐 代理出口真实 IP: {sb.get_text('body')}")
+        except Exception:
+            pass
 
         if login(sb):
             renew(sb)
