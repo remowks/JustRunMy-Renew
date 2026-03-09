@@ -1,10 +1,8 @@
 name: JustRunMy 自动续期
-
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 1 */2 * *'
-
 jobs:
   renew:
     runs-on: ubuntu-latest
@@ -12,16 +10,9 @@ jobs:
     permissions:
       contents: write
       actions: write
-      
     steps:
       - name: 📥 下载代码
         uses: actions/checkout@v4
-        
-      - name: 🔍 Debug Secrets
-        run: |
-          echo "Email set: ${{ secrets.JUSTRUNMY_EMAIL != '' }}"
-          echo "Password set: ${{ secrets.JUSTRUNMY_PASSWORD != '' }}"
-        
       - name: 🐍 设置 Python
         uses: actions/setup-python@v4
         with:
@@ -43,7 +34,7 @@ jobs:
             nohup ./gost -L http://:8080 -F $GOST_PROXY_TARGET > gost.log 2>&1 &
             sleep 3
             echo "测试本地代理连通性..."
-            curl -x http://127.0.0.1:8080 https://api.ipify.org -v
+            curl -x http://127.0.0.1:8080  https://api.ipify.org  -v
             echo "USE_PROXY=true" >> $GITHUB_ENV
           fi
           
@@ -68,9 +59,7 @@ jobs:
           JUSTRUNMY_PASSWORD: ${{ secrets.JUSTRUNMY_PASSWORD }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
-          USE_PROXY: ${{ env.USE_PROXY }}
         run: |
-          export DISPLAY=:99
           xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
             python justrunmy_renew.py
             
