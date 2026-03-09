@@ -1,8 +1,10 @@
 name: JustRunMy 自动续期
+
 on:
   workflow_dispatch:
   schedule:
     - cron: '0 1 */2 * *'
+
 jobs:
   renew:
     runs-on: ubuntu-latest
@@ -10,9 +12,16 @@ jobs:
     permissions:
       contents: write
       actions: write
+      
     steps:
       - name: 📥 下载代码
         uses: actions/checkout@v4
+        
+      - name: 🔍 Debug Secrets
+        run: |
+          echo "Email set: ${{ secrets.JUSTRUNMY_EMAIL != '' }}"
+          echo "Password set: ${{ secrets.JUSTRUNMY_PASSWORD != '' }}"
+        
       - name: 🐍 设置 Python
         uses: actions/setup-python@v4
         with:
@@ -26,7 +35,7 @@ jobs:
             echo "ℹ️ 未配置 GOST_PROXY_TARGET，将使用 GitHub Actions 本地网络直连。"
             echo "USE_PROXY=false" >> $GITHUB_ENV
           else
-            wget -q https://github.com/ginuerzh/gost/releases/download/v2.11.5/gost-linux-amd64-2.11.5.gz
+            wget -q https://github.com/ginuerzh/gost/releases/download/v2.11.5/gost-linux-amd64-2.11.5.gz 
             gunzip gost-linux-amd64-2.11.5.gz
             chmod +x gost-linux-amd64-2.11.5
             mv gost-linux-amd64-2.11.5 gost
@@ -59,7 +68,9 @@ jobs:
           JUSTRUNMY_PASSWORD: ${{ secrets.JUSTRUNMY_PASSWORD }}
           TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
           TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+          USE_PROXY: ${{ env.USE_PROXY }}
         run: |
+          export DISPLAY=:99
           xvfb-run --auto-servernum --server-args="-screen 0 1920x1080x24" \
             python justrunmy_renew.py
             
